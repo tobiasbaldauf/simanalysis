@@ -51,6 +51,9 @@ FileNumber=9
 ! Realization
 NodeNumber=1
 
+call genbink(0.003d0,0.5d0,'lin')
+
+
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 !				> > > FILENAMES < < <
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -74,10 +77,10 @@ doCorrect=1
 ! Output File Names
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
-Extension='NODE'//trim(nodestr)//'_'//assign//'C1_SN0_DMP_1024_'
-Folder='/home/baldauf/Projects/Matias/Spectra/'
+Extension='NODE'//trim(nodestr)//'_'//assign//'C1_128_'
+Folder='/home/cosmos/users/dc-bald1/'
 		
-PsFileBase='matterMom_'
+PsFileBase='power_'
 PsOutFile=trim(Folder)//trim(PsFileBase)//trim(Extension)//trim(snapstr)//'.dat'
 write(*,*) 'Writing Power-Spectrum to ',PsOutFile
 
@@ -110,10 +113,11 @@ iDat=1; iPos=0; iVel=0; iID=0; iRed=0
 
 
 ! Fiducial Cosmology Final
-sf%SNAPDATA = '/data/baldauf/SimSuite/wmap7_fid_run'//trim(nodestr)//'/DATA/'
-sf%SNAPBASE = 'wmap7_fid_run'//trim(nodestr)//'_'
+sf%SNAPDATA = '/slow/space/cosmos/lss-nongauss/baldauf/SimSuite/wmap7_fid_run'//trim(nodestr)//'_PM/DATA/'
+sf%SNAPBASE = 'wmap7_fid_run'//trim(nodestr)//'_PM_'
 sf%SNAPEXT = snapstr
 sf%SNAPNFILES = 24
+
 
 call read_snap(sF,iDat,iPos,iVel,iID,iRed,NCell,deltadm)
 call normalize(deltadm)

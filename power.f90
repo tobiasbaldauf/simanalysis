@@ -9,7 +9,7 @@ implicit none
 character*200 :: Folder
 character*200 :: InFileBase
 character*200 :: PsFileBase, PsOutFile,Extension
-character*10 :: nodestr,snapstr
+character*10 :: nodestr,snapstr,ncstr
 
 integer :: idat                ! =1 read data; =0 get header
 integer :: iPos                ! =1 read positions; =0 do not.
@@ -44,14 +44,14 @@ integer :: i
 	
 call cpu_time(time1)
 ! Size of FFT Grid	
-NCell=128
+NCell=256
 box=1500.
 ! Redshift Output
 FileNumber=9
 ! Realization
 NodeNumber=1
 
-call genbink(0.003d0,0.5d0,'lin')
+call genbink(0.003d0,1.0d0,'lin')
 
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
@@ -71,14 +71,24 @@ else
     write(nodestr,'(i2)') NodeNumber
 endif
 
+call getarg(1,nodestr)
+
+if (Ncell<100) then
+    write(ncstr,'(i2)') Ncell
+elseif (Ncell<1000) then
+    write(ncstr,'(i3)') Ncell
+elseif (Ncell<10000) then
+    write(ncstr,'(i4)') Ncell
+endif
+
 doCorrect=1
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ! Output File Names
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
-Extension='NODE'//trim(nodestr)//'_'//assign//'C1_128_'
-Folder='/home/cosmos/users/dc-bald1/'
+Extension='NODE'//trim(nodestr)//'_'//assign//'C1_'//trim(ncstr)//'_'
+Folder='/home/cosmos/users/dc-bald1/Projects/AnalysisCode/Spectra/'
 		
 PsFileBase='power_'
 PsOutFile=trim(Folder)//trim(PsFileBase)//trim(Extension)//trim(snapstr)//'.dat'

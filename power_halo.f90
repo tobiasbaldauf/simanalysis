@@ -19,7 +19,7 @@ module HaloTYPE
 end module HaloTYPE
 
 program power
-
+USE halotype
 USE eval           ! Frequently used Routines for Correlation and Power Spectrum
 USE snapshot       ! Reads in Dark Matter Particles 
 implicit none
@@ -29,8 +29,8 @@ implicit none
 character*200 :: Folder
 character*200 :: InFileBase
 character*200 :: PsFileBase, PsOutFile,Extension
-character*200 :: datadir,HalFileBase,HalInFile,HaloFileBase
-character*10 :: nodestr,snapstr
+character*200 :: datadir,HalFileBase,HalInFile,HaloFileBase,HaloOutFile
+character*10 :: nodestr,snapstr,ncstr
 
 integer :: idat                ! =1 read data; =0 get header
 integer :: iPos                ! =1 read positions; =0 do not.
@@ -45,15 +45,17 @@ integer :: doCorrect						! do CIC correction or not
 integer :: doBinnedH
 integer :: NodeNumber
 integer :: FileNumber
-integer :: NHalBin,iMBin,cnt
+integer :: NHalBin,iMBin,cnt,NHalTot
 
+
+type(halo) :: HaloFinal
 integer, parameter :: NMassBins=5
 real, dimension(NMassBins+1) :: MBinB
 integer, dimension(NMassBins+1) :: NBinB
 real, dimension(NMassBins) :: MBinC
 integer, dimension(NMassBins) :: NHalosBin
 real(4), dimension(:), allocatable :: HalM
-real(8), dimension(:,:), allocatable :: HalPos,HalVel
+real(4), dimension(:,:), allocatable :: HalPos,HalVel
 	
 	
 ! Box dimensions
@@ -63,7 +65,7 @@ real(8), dimension(:,:,:), allocatable :: deltar
 integer, dimension(NkBins) :: kBinCnt
 real(8), dimension(NkBins) :: kTrueBinC
 real(8), dimension(NkBins) :: powerdfdf
-real(8), dimension(NRadBins,NMassBins) :: powerdmdg,powerdgdg
+real(8), dimension(NkBins,NMassBins) :: powerdmdg,powerdgdg
 
 
 real :: time1,time2
@@ -79,7 +81,7 @@ integer :: i
 	
 call cpu_time(time1)
 ! Size of FFT Grid	
-NCell=128
+NCell=64
 box=1500.
 ! Redshift Output
 FileNumber=9
@@ -170,8 +172,8 @@ iDat=1; iPos=0; iVel=0; iID=0; iRed=0
 
 
 ! Fiducial Cosmology Final
-sf%SNAPDATA = '/slow/space/cosmos/lss-nongauss/baldauf/SimSuite/wmap7_fid_run'//trim(nodestr)//'_PM/DATA/'
-sf%SNAPBASE = 'wmap7_fid_run'//trim(nodestr)//'_PM_'
+sf%SNAPDATA = '/slow/space/cosmos/lss-nongauss/baldauf/SimSuite/wmap7_fid_run'//trim(nodestr)//'/DATA/'
+sf%SNAPBASE = 'wmap7_fid_run'//trim(nodestr)//'_'
 sf%SNAPEXT = snapstr
 sf%SNAPNFILES = 24
 
@@ -259,7 +261,7 @@ close(20)
 			deltag=0.d0
 
 			call cicmass(NHalBin,HalPos,deltag)
-			MBinC(iBin)=sum(HalM)/real(NHalBin)
+			MBinC(iMBin)=sum(HalM)/real(NHalBin)
 
 			call normalize(deltag)
 			
@@ -274,13 +276,13 @@ close(20)
 			allocate(deltar(1:NCell+2,1:NCell,1:NCell))
 			deltar=0.d0
 			call comprod(deltadm,deltag,deltar)
- 			call powerspectrum(deltar,powercenters,powerdmdg(:,iMBin))	
+ 			call powerspectrum(deltar,kBinCnt,kTrueBinC,powerdmdg(:,iMBin))	
 			deallocate(deltar)
 			
 			allocate(deltar(1:NCell+2,1:NCell,1:NCell))
 			deltar=0.d0
 			call comprod(deltag,deltag,deltar)
- 			call powerspectrum2(deltar,powercenters,powerdgdg(:,iMBin))	
+ 			call powerspectrum(deltar,kBinCnt,kTrueBinC,powerdgdg(:,iMBin))	
 			deallocate(deltar)
 
 					
@@ -299,8 +301,8 @@ close(20)
 
 	
 	open(20,file=trim(HaloOutFile),form='formatted',status='replace')
- 	do i=1,NRadBins
-   		write(20,'(120ES20.4)') 2*pi/box*powercenters(i),powerdfdf(i), powerdmdg(i,:), powerdgdg(i,:)
+ 	do i=1,NkBins
+		write(20,'(2ES30.10,1I30,1ES30.10)') kbinc(i),ktruebinc(i),kbincnt(i),powerdfdf(i), powerdmdg(i,:), powerdgdg(i,:)
    	enddo
    	close(20)
 

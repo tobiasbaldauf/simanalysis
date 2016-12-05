@@ -1,5 +1,5 @@
 
-source=power
+source=power_halo
 
 AUX1 = eval
 AUX2= read_snap

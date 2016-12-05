@@ -302,7 +302,7 @@ close(20)
 	
 	open(20,file=trim(HaloOutFile),form='formatted',status='replace')
  	do i=1,NkBins
-		write(20,'(2ES30.10,1I30,1ES30.10)') kbinc(i),ktruebinc(i),kbincnt(i),powerdfdf(i), powerdmdg(i,:), powerdgdg(i,:)
+		write(20,'(2ES30.10,1I30,11ES30.10)') kbinc(i),ktruebinc(i),kbincnt(i),powerdfdf(i), powerdmdg(i,:), powerdgdg(i,:)
    	enddo
    	close(20)
 

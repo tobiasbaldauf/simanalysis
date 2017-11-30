@@ -427,6 +427,7 @@ real(8) :: cyfac
 complex(8) :: c1,c2,c3
 logical :: dosym
 
+print*,'Bispectrum Code Started'
 
 call cpu_time(time1)
 nc=ncell
@@ -437,7 +438,7 @@ binB=0.0d0
 binCnt=0
 binK=0.0d0
 
-
+print*,'Starting Loops'
 !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(k1,k2,k3,j1,j2,j3,i1,i2,i3,kz1,kz2,kz3,ky1,ky2,ky3,kx1,kx2,kx3,kr1,kr2,kr3,pow,w1,w2,w3,cyfac) NUM_THREADS(nthr) &
 !$OMP REDUCTION(+:binCnt,binB,binK)
 do k1=1,nc

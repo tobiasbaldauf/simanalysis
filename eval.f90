@@ -13,6 +13,7 @@ real(8) :: box
 real :: rhobar
 integer,parameter :: chunk=10
 integer,parameter :: nthr=10
+integer,parameter :: nthrfftw=10
 integer ,parameter :: doSN=0
 integer ,parameter :: doRed=0
 integer, parameter :: NAngBins=1
@@ -424,6 +425,7 @@ integer, dimension(nkbins,nkbins,nkbins) :: binCnt
 integer :: OMP_GET_NUM_THREADS,nthr,TID,OMP_GET_THREAD_NUM
 real(8) :: cyfac
 complex(8) :: c1,c2,c3
+logical :: dosym
 
 
 call cpu_time(time1)
@@ -436,7 +438,7 @@ binCnt=0
 binK=0.0d0
 
 
-!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(k1,k2,k3,j1,j2,j3,i1,i2,i3,kz1,kz2,kz3,ky1,ky2,ky3,kx1,kx2,kx3,kr1,kr2,kr3,pow,w1,w2,w3,cyfac,x2,x3,mu) NUM_THREADS(ncore) &
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(k1,k2,k3,j1,j2,j3,i1,i2,i3,kz1,kz2,kz3,ky1,ky2,ky3,kx1,kx2,kx3,kr1,kr2,kr3,pow,w1,w2,w3,cyfac) NUM_THREADS(nthr) &
 !$OMP REDUCTION(+:binCnt,binB,binK) &
 !$OMP SCHEDULE(DYNAMIC,1)
 do k1=nmin,nc
@@ -585,14 +587,14 @@ enddo
 
 
 do w1=1,NRadBins
-do w2=1,NRadBins
-do w3=1,NMuBins
-if (RadCnt(w1,w2,w3) .gt. 0) then
-RadCont(w1,w2,w3)=RadCont(w1,w2,w3)/real(RadCnt(w1,w2,w3))
-RadVar(w1,w2,w3)=RadVar(w1,w2,w3)/real(RadCnt(w1,w2,w3))
-endif
-enddo
-enddo
+	do w2=1,NRadBins
+		do w3=1,NMuBins
+			if (RadCnt(w1,w2,w3) .gt. 0) then
+				binB(w1,w2,w3)=binB(w1,w2,w3)/real(binCnt(w1,w2,w3))
+				binK(w1,w2,w3,:)=binK(w1,w2,w3,:)/real(binCnt(w1,w2,w3))
+			endif
+		enddo
+	enddo
 enddo
 call cpu_time(time2)
 time2=(time2-time1)
@@ -626,7 +628,7 @@ implicit none
   	first_fft=.false.
         print*,'creating plan'
 		call dfftw_init_threads
-		call dfftw_plan_with_nthreads(8)
+		call dfftw_plan_with_nthreads(nthrfftw)
 		if(ffttype=='mes') then
 			write(*,*) 'Measure'
 			call dfftw_plan_dft_r2c_3d(plan, ncell, ncell, ncell, a, a,FFTW_MEASURE)

@@ -458,7 +458,7 @@ do k1=nmin,nc
 		print*,'j1',j1
 		if (j1 .lt. imax) then
 			ky1=j1-1
-		else if (j1 .gt. nc-imax)
+		else if (j1 .gt. nc-imax) then
 		   ky1=j1-1-nc
 		else
 			cycle
@@ -467,22 +467,23 @@ do k1=nmin,nc
 			kx1=(i1-1)/2
 			do k2=nmin,imax
 				if (k2 .lt. imax) then
-				kz2=k2-1
-				else if(k2 .gt. nc-imax)
-				kz2=k2-1-nc
+					kz2=k2-1
+				else if(k2 .gt. nc-imax) then
+					kz2=k2-1-nc
+				else
+					cycle
 				endif
 				do j2=nmin,nc
 					!print*,'j2',j2
 					if (j2 .lt. imax) then
 					   ky2=j2-1
-					else if (j2 .lt. nc-imax)
+					else if (j2 .lt. nc-imax) then
 					   ky2=j2-1-nc
 					else
 						cycle
 					endif
 					do i2=1,2*imax,2
 					   kx2=(i2-1)/2
-					!print*,'i1',i2
 					
 					if (sqrt((kx1+kx2)**2.0+(ky1+ky2)**2.0+(kz1+kz2)**2.0)<imax) then
 					
@@ -559,9 +560,9 @@ do k1=nmin,nc
 						
 						
 						if (kr1 > 0.0 .and. kr2 > 0.0 .and. kr3 > 0.0) then
-							do w1=1,NRadBins
-								do w2=1,NRadBins
-									do w3=1,NRadBins
+							do w1=1,Nkbins
+								do w2=1,Nkbins
+									do w3=1,Nkbins
 									   if ((kr1>=kbinb(w1)) .and.(kr1<kbinb(w1+1)) .and. (kr2>=kbinb(w2)) .and.(kr2<kbinb(w2+1)) .and. (kr3>=kbinb(w3)) .and.(kr3<kbinb(w3+1))) then
 											binCnt(w1,w2,w3)=binCnt(w1,w2,w3)+1
 											binB(w1,w2,w3)=binB(w1,w2,w3)+pow
@@ -586,9 +587,9 @@ enddo
 
 
 
-do w1=1,NRadBins
-	do w2=1,NRadBins
-		do w3=1,NMuBins
+do w1=1,Nkbins
+	do w2=1,Nkbins
+		do w3=1,Nkbins
 			if (RadCnt(w1,w2,w3) .gt. 0) then
 				binB(w1,w2,w3)=binB(w1,w2,w3)/real(binCnt(w1,w2,w3))
 				binK(w1,w2,w3,:)=binK(w1,w2,w3,:)/real(binCnt(w1,w2,w3))

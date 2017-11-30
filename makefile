@@ -6,7 +6,7 @@ AUX1 = eval
 AUX2= read_snap
 
 F90 = gfortran
-F90FLAGS = -O3 -mcmodel=medium -fopenmp -ffixed-line-length-none -ffree-line-length-none
+F90FLAGS = -O3 -fbacktrace -g -fcheck=all -mcmodel=medium -fopenmp -ffixed-line-length-none -ffree-line-length-none
 
 
 mod1 = -I${INCLUDE}

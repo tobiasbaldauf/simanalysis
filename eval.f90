@@ -2,7 +2,7 @@ module eval
 implicit none
 	
 integer :: NCell
-integer, parameter :: NkBins=60
+integer, parameter :: NkBins=20
 integer, parameter :: NrBins=60
 real(8), dimension(nkbins) :: kbinc
 real(8), dimension(nkbins+1) :: kbinb
@@ -419,10 +419,10 @@ integer :: w1,w2,w3
 integer :: i,i1,i2,i3,j1,j2,j3,k1,k2,k3
 real(8) :: kr,kr1,kr2,kr3,kx1,kx2,kx3,ky1,ky2,ky3,kz1,kz2,kz3,pow
 real :: time1,time2
-real(8), dimension(nkbins,nkbins,nkbins) :: binB
-real(8), dimension(nkbins,nkbins,nkbins,3) :: binK
-integer, dimension(nkbins,nkbins,nkbins) :: binCnt
-integer :: OMP_GET_NUM_THREADS,nthr,TID,OMP_GET_THREAD_NUM
+real(8), dimension(:,:,:) :: binB
+real(8), dimension(:,:,:,:) :: binK
+integer, dimension(:,:,:) :: binCnt
+!integer :: OMP_GET_NUM_THREADS,nthr,TID,OMP_GET_THREAD_NUM
 real(8) :: cyfac
 complex(8) :: c1,c2,c3
 logical :: dosym
@@ -437,15 +437,15 @@ nc=ncell
 binB=0.0d0
 binCnt=0
 binK=0.0d0
-
+print*,imax
 print*,'Starting Loops'
-!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(k1,k2,k3,j1,j2,j3,i1,i2,i3,kz1,kz2,kz3,ky1,ky2,ky3,kx1,kx2,kx3,kr1,kr2,kr3,pow,w1,w2,w3,cyfac) NUM_THREADS(nthr) &
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(k1,k2,k3,j1,j2,j3,i1,i2,i3,kz1,kz2,kz3,ky1,ky2,ky3,kx1,kx2,kx3,kr1,kr2,kr3,pow,w1,w2,w3,cyfac,c1,c2,c3) NUM_THREADS(nthr) &
 !$OMP REDUCTION(+:binCnt,binB,binK)
 do k1=1,nc
 	print*,'k1',k1
-	nthr=OMP_GET_NUM_THREADS()
-	TID = OMP_GET_THREAD_NUM()
-	print *,'Threads ',nthr,'ID ',tid
+	!nthr=OMP_GET_NUM_THREADS()
+	!TID = OMP_GET_THREAD_NUM()
+	!print *,'Threads ',nthr,'ID ',tid
 	
 	if (k1 .lt. imax) then
 		kz1=k1-1
@@ -658,6 +658,55 @@ implicit none
   write(*,*) 'FFT Calculated in',time2
   return
 end subroutine fft3d
+
+
+subroutine hdf5export
+use hdf5
+implicit none
+integer :: error  
+CHARACTER(LEN=8), PARAMETER :: filename = "dsetf.h5" ! File name
+CHARACTER(LEN=4), PARAMETER :: dsetname = "dset"     ! Dataset name
+
+INTEGER(HID_T) :: file_id       ! File identifier
+INTEGER(HID_T) :: dset_id       ! Dataset identifier
+INTEGER(HID_T) :: dspace_id     ! Dataspace identifier
+REAL(8), DIMENSION(4,4,4) :: dset_data
+INTEGER(HSIZE_T), DIMENSION(3) :: dims = (/4,4,4/) ! Dataset dimensions
+INTEGER     ::   rank = 3  
+INTEGER :: i,j,l
+
+  DO i = 1, 4
+     DO j = 1, 4
+     	DO l = 1, 4
+        dset_data(i,j,l) = 1.0*(i+(j-1)*4+(l-1)*4**2)
+     	END DO
+     END DO
+  END DO
+
+CALL h5open_f(error)
+CALL h5fcreate_f(filename, H5F_ACC_TRUNC_F, file_id, error)
+! Create the dataspace.
+  !
+  CALL h5screate_simple_f(rank, dims, dspace_id, error)
+print*,H5T_NATIVE_DOUBLE
+  !
+  ! Create the dataset with default properties.
+  !
+  CALL h5dcreate_f(file_id, dsetname, H5T_NATIVE_DOUBLE, dspace_id,dset_id, error)
+
+  CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, dset_data, dims, error)
+  !
+  ! End access to the dataset and release resources used by it.
+  !
+  CALL h5dclose_f(dset_id, error)
+
+  !
+  ! Terminate access to the data space.
+  !
+  CALL h5sclose_f(dspace_id, error)
+CALL h5fclose_f(file_id, error)
+CALL h5close_f(error)
+end subroutine hdf5export
 
 
 

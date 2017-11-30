@@ -1,5 +1,6 @@
 
 source=power_halo
+source=bispect
 
 AUX1 = eval
 AUX2= read_snap

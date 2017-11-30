@@ -404,7 +404,203 @@ call cpu_time(time2)
 time2=(time2-time1)
 write(*,'(a,f8.2)') ' Power spectrum calculated in', time2
 return
-end subroutine powerspectrum	
+end subroutine powerspectrum
+
+!///////////////////////////////////////////////////////////////////////////////
+!				Bispectrum mmh Mudependent
+!///////////////////////////////////////////////////////////////////////////////
+
+subroutine bispectrum_threefield(deltaa,deltab,deltac,dosym,binCnt,binP,binK)
+implicit none 
+integer :: imax,nc
+real(8), dimension(:,:,:) :: deltaa,deltab,deltac
+integer :: w1,w2,w3
+integer :: i,i1,i2,i3,j1,j2,j3,k1,k2,k3
+real(8) :: kr,kr1,kr2,kr3,kx1,kx2,kx3,ky1,ky2,ky3,kz1,kz2,kz3,pow
+real :: time1,time2
+real(8), dimension(nkbins,nkbins,nkbins) :: binB
+real(8), dimension(nkbins,nkbins,nkbins,3) :: binK
+integer, dimension(nkbins,nkbins,nkbins) :: binCnt
+integer :: OMP_GET_NUM_THREADS,nthr,TID,OMP_GET_THREAD_NUM
+real(8) :: cyfac
+complex(8) :: c1,c2,c3
+
+
+call cpu_time(time1)
+nc=ncell
+
+
+
+binB=0.0d0
+binCnt=0
+binK=0.0d0
+
+
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(k1,k2,k3,j1,j2,j3,i1,i2,i3,kz1,kz2,kz3,ky1,ky2,ky3,kx1,kx2,kx3,kr1,kr2,kr3,pow,w1,w2,w3,cyfac,x2,x3,mu) NUM_THREADS(ncore) &
+!$OMP REDUCTION(+:binCnt,binB,binK) &
+!$OMP SCHEDULE(DYNAMIC,1)
+do k1=nmin,nc
+	print*,'k1',k1
+	nthr=OMP_GET_NUM_THREADS()
+	TID = OMP_GET_THREAD_NUM()
+	print *,'Threads ',nthr,'ID ',tid
+	
+	if (k1 .lt. imax) then
+		kz1=k1-1
+	else if(k1 .gt. nc-imax) then
+		kz1=k1-1-nc
+	else
+		cycle
+	endif
+	do j1=nmin,nc
+		print*,'j1',j1
+		if (j1 .lt. imax) then
+			ky1=j1-1
+		else if (j1 .gt. nc-imax)
+		   ky1=j1-1-nc
+		else
+			cycle
+		endif
+		do i1=1,2*imax,2
+			kx1=(i1-1)/2
+			do k2=nmin,imax
+				if (k2 .lt. imax) then
+				kz2=k2-1
+				else if(k2 .gt. nc-imax)
+				kz2=k2-1-nc
+				endif
+				do j2=nmin,nc
+					!print*,'j2',j2
+					if (j2 .lt. imax) then
+					   ky2=j2-1
+					else if (j2 .lt. nc-imax)
+					   ky2=j2-1-nc
+					else
+						cycle
+					endif
+					do i2=1,2*imax,2
+					   kx2=(i2-1)/2
+					!print*,'i1',i2
+					
+					if (sqrt((kx1+kx2)**2.0+(ky1+ky2)**2.0+(kz1+kz2)**2.0)<imax) then
+					
+						kx3=-kx1-kx2
+						ky3=-ky1-ky2
+						kz3=-kz1-kz2
+						
+						if (kx3<0) then
+							i3=-2*kx3+1
+							ky3=-ky3
+							kz3=-kz3
+							cyfac=-1.0d0
+						else
+							i3=2*kx3+1
+							cyfac=1.0d0
+						endif
+						if (ky3<0) then	
+							j3=ky3+nc+1
+						else
+							j3=ky3+1
+						endif
+						if (kz3<0) then
+							k3=kz3+nc+1
+						else
+							k3=kz3+1
+						end if
+						
+						
+						
+						c1=cmplx(deltaa(i1,j1,k1),deltaa(i1+1,j1,k1))
+						c2=cmplx(deltab(i2,j2,k2),deltab(i2+1,j2,k2))
+						c3=cmplx(deltac(i3,j3,k3),cyfac*deltac(i3+1,j3,k3))
+						
+						pow=real(c1*c2*c3)
+						
+						if (dosym .eqv. .true.) then
+								c1=cmplx(deltab(i1,j1,k1),deltab(i1+1,j1,k1))
+								c2=cmplx(deltaa(i2,j2,k2),deltaa(i2+1,j2,k2))
+								c3=cmplx(deltac(i3,j3,k3),cyfac*deltac(i3+1,j3,k3))
+								pow=pow+real(c1*c2*c3)
+			
+								c1=cmplx(deltaa(i1,j1,k1),deltaa(i1+1,j1,k1))
+								c2=cmplx(deltac(i2,j2,k2),deltac(i2+1,j2,k2))
+								c3=cmplx(deltab(i3,j3,k3),cyfac*deltab(i3+1,j3,k3))
+								pow=pow+real(c1*c2*c3)
+			
+								c1=cmplx(deltac(i1,j1,k1),deltac(i1+1,j1,k1))
+								c2=cmplx(deltab(i2,j2,k2),deltab(i2+1,j2,k2))
+								c3=cmplx(deltaa(i3,j3,k3),cyfac*deltaa(i3+1,j3,k3))
+								pow=pow+real(c1*c2*c3)
+	
+								c1=cmplx(deltac(i1,j1,k1),deltac(i1+1,j1,k1))
+								c2=cmplx(deltaa(i2,j2,k2),deltaa(i2+1,j2,k2))
+								c3=cmplx(deltab(i3,j3,k3),cyfac*deltab(i3+1,j3,k3))
+								pow=pow+real(c1*c2*c3)
+			
+	
+								c1=cmplx(deltab(i1,j1,k1),deltab(i1+1,j1,k1))
+								c2=cmplx(deltac(i2,j2,k2),deltac(i2+1,j2,k2))
+								c3=cmplx(deltaa(i3,j3,k3),cyfac*deltaa(i3+1,j3,k3))
+								pow=pow+real(c1*c2*c3)
+			
+			
+								pow=pow/6.0d0
+						endif
+						
+	
+						
+						
+						
+						kr1=sqrt(kx1**2.0+ky1**2.0+kz1**2.0)
+						kr2=sqrt(kx2**2.0+ky2**2.0+kz2**2.0)
+						kr3=sqrt(kx3**2.0+ky3**2.0+kz3**2.0)
+						
+						
+						if (kr1 > 0.0 .and. kr2 > 0.0 .and. kr3 > 0.0) then
+							do w1=1,NRadBins
+								do w2=1,NRadBins
+									do w3=1,NRadBins
+									   if ((kr1>=kbinb(w1)) .and.(kr1<kbinb(w1+1)) .and. (kr2>=kbinb(w2)) .and.(kr2<kbinb(w2+1)) .and. (kr3>=kbinb(w3)) .and.(kr3<kbinb(w3+1))) then
+											binCnt(w1,w2,w3)=binCnt(w1,w2,w3)+1
+											binB(w1,w2,w3)=binB(w1,w2,w3)+pow
+											binK(w1,w2,w3,1)=binK(w1,w2,w3,1)+kr1
+											binK(w1,w2,w3,2)=binK(w1,w2,w3,2)+kr2
+											binK(w1,w2,w3,3)=binK(w1,w2,w3,3)+kr3
+									   endif
+									enddo
+								enddo
+							enddo
+						endif
+						
+					endif
+					enddo
+				enddo
+			enddo 
+		enddo
+	enddo
+enddo
+!$OMP END PARALLEL DO 
+
+
+
+
+do w1=1,NRadBins
+do w2=1,NRadBins
+do w3=1,NMuBins
+if (RadCnt(w1,w2,w3) .gt. 0) then
+RadCont(w1,w2,w3)=RadCont(w1,w2,w3)/real(RadCnt(w1,w2,w3))
+RadVar(w1,w2,w3)=RadVar(w1,w2,w3)/real(RadCnt(w1,w2,w3))
+endif
+enddo
+enddo
+enddo
+call cpu_time(time2)
+time2=(time2-time1)
+write(*,'(a,f8.2)') ' Bispectrum calculated in', time2
+return
+end subroutine bispectrum_threefield
+
+
 
 !///////////////////////////////////////////////////////////////////////////////
 !_________________________________________FFT __________________________________

@@ -358,7 +358,7 @@ binP=0.d0
 binK=0.d0
 
 
-!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(k,j,i,kz,ky,kx,kr,pow,w) NUM_THREADS(chunk) &
+!$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(k,j,i,kz,ky,kx,kr,pow,w) NUM_THREADS(nthr) &
 !$OMP REDUCTION(+:binCnt,binP,binK)		
        do k=1,ncell
           if (k .lt. ncell/2+1) then
@@ -439,8 +439,7 @@ binK=0.0d0
 
 
 !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(k1,k2,k3,j1,j2,j3,i1,i2,i3,kz1,kz2,kz3,ky1,ky2,ky3,kx1,kx2,kx3,kr1,kr2,kr3,pow,w1,w2,w3,cyfac) NUM_THREADS(nthr) &
-!$OMP REDUCTION(+:binCnt,binB,binK) &
-!$OMP SCHEDULE(DYNAMIC,1)
+!$OMP REDUCTION(+:binCnt,binB,binK)
 do k1=1,nc
 	print*,'k1',k1
 	nthr=OMP_GET_NUM_THREADS()

@@ -441,7 +441,7 @@ binK=0.0d0
 !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(k1,k2,k3,j1,j2,j3,i1,i2,i3,kz1,kz2,kz3,ky1,ky2,ky3,kx1,kx2,kx3,kr1,kr2,kr3,pow,w1,w2,w3,cyfac) NUM_THREADS(nthr) &
 !$OMP REDUCTION(+:binCnt,binB,binK) &
 !$OMP SCHEDULE(DYNAMIC,1)
-do k1=nmin,nc
+do k1=1,nc
 	print*,'k1',k1
 	nthr=OMP_GET_NUM_THREADS()
 	TID = OMP_GET_THREAD_NUM()
@@ -454,7 +454,7 @@ do k1=nmin,nc
 	else
 		cycle
 	endif
-	do j1=nmin,nc
+	do j1=1,nc
 		print*,'j1',j1
 		if (j1 .lt. imax) then
 			ky1=j1-1
@@ -465,7 +465,7 @@ do k1=nmin,nc
 		endif
 		do i1=1,2*imax,2
 			kx1=(i1-1)/2
-			do k2=nmin,imax
+			do k2=1,imax
 				if (k2 .lt. imax) then
 					kz2=k2-1
 				else if(k2 .gt. nc-imax) then

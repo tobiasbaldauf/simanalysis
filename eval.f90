@@ -411,7 +411,7 @@ end subroutine powerspectrum
 !				Bispectrum mmh Mudependent
 !///////////////////////////////////////////////////////////////////////////////
 
-subroutine bispectrum_threefield(deltaa,deltab,deltac,dosym,binCnt,binB,binK)
+subroutine bispectrum_threefield(deltaa,deltab,deltac,dosym,imax,binCnt,binB,binK)
 implicit none 
 integer :: imax,nc
 real(8), dimension(:,:,:) :: deltaa,deltab,deltac

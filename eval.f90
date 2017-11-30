@@ -411,7 +411,7 @@ end subroutine powerspectrum
 !				Bispectrum mmh Mudependent
 !///////////////////////////////////////////////////////////////////////////////
 
-subroutine bispectrum_threefield(deltaa,deltab,deltac,dosym,binCnt,binP,binK)
+subroutine bispectrum_threefield(deltaa,deltab,deltac,dosym,binCnt,binB,binK)
 implicit none 
 integer :: imax,nc
 real(8), dimension(:,:,:) :: deltaa,deltab,deltac
@@ -590,7 +590,7 @@ enddo
 do w1=1,Nkbins
 	do w2=1,Nkbins
 		do w3=1,Nkbins
-			if (RadCnt(w1,w2,w3) .gt. 0) then
+			if (binCnt(w1,w2,w3) .gt. 0) then
 				binB(w1,w2,w3)=binB(w1,w2,w3)/real(binCnt(w1,w2,w3))
 				binK(w1,w2,w3,:)=binK(w1,w2,w3,:)/real(binCnt(w1,w2,w3))
 			endif

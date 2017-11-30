@@ -473,7 +473,7 @@ do k1=1,nc
 				else
 					cycle
 				endif
-				do j2=nmin,nc
+				do j2=1,nc
 					!print*,'j2',j2
 					if (j2 .lt. imax) then
 					   ky2=j2-1

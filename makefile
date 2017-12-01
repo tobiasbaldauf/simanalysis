@@ -1,4 +1,4 @@
-
+#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/cosmos/users/dc-bald1/lib/HDF5-GNU/lib
 source=power_halo
 source=bispect
 
@@ -6,14 +6,22 @@ AUX1 = eval
 AUX2= read_snap
 
 F90 = gfortran
-F90FLAGS = -O3 -fbacktrace -g -fcheck=all -mcmodel=medium -fopenmp -ffixed-line-length-none -ffree-line-length-none
+F90FLAGS = -O3 -mcmodel=medium -fopenmp -ffixed-line-length-none -ffree-line-length-none
 
+HDF5 = /nfs/software/apps/hdf5-1.8.13-intel-15.0.4-serial
+HDF5 = /home/cosmos/users/dc-bald1/lib/HDF5-GNU
 
 mod1 = -I${INCLUDE}
-mods = ${mod1}
+mod2 = -I${HDF5}/include
+mods = ${mod1} ${mod2}
 
 lib1 = -lfftw3_threads -lfftw3 -lm -lpthread
-libs = ${lib1}
+
+LIBZ    = ${HDF5}/lib/libz.a
+LIBSZ   = ${HDF5}/lib/libsz.a
+lib2 = -L${HDF5}/lib -lhdf5_fortran -lhdf5hl_fortran -lhdf5 -lhdf5_hl -lz
+
+libs = ${lib1} ${lib2}
 
 
 

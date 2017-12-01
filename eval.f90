@@ -660,51 +660,49 @@ implicit none
 end subroutine fft3d
 
 
-subroutine hdf5export
+subroutine hdf5export(filename,dsetname,bcnt,b,kavg)
 use hdf5
 implicit none
 integer :: error  
-CHARACTER(LEN=8), PARAMETER :: filename = "dsetf.h5" ! File name
-CHARACTER(LEN=4), PARAMETER :: dsetname = "dset"     ! Dataset name
+CHARACTER(*) :: filename ! File name
+CHARACTER(*) :: dsetname    ! Dataset name
 
 INTEGER(HID_T) :: file_id       ! File identifier
 INTEGER(HID_T) :: dset_id       ! Dataset identifier
 INTEGER(HID_T) :: dspace_id     ! Dataspace identifier
-REAL(8), DIMENSION(4,4,4) :: dset_data
-INTEGER(HSIZE_T), DIMENSION(3) :: dims = (/4,4,4/) ! Dataset dimensions
-INTEGER     ::   rank = 3  
+REAL(8), DIMENSION(nkbins,nkbins,nkbins) :: b
+REAL(8), DIMENSION(nkbins,nkbins,nkbins,3) :: kavg
+INTEGER, DIMENSION(nkbins,nkbins,nkbins) :: bcnt
+INTEGER(HSIZE_T), DIMENSION(3), parameter :: dimsb=(/nkbins,nkbins,nkbins/)! Dataset dimensions
+INTEGER     ::   rankb = 3
+INTEGER(HSIZE_T), DIMENSION(4), parameter :: dimsbk=(/nkbins,nkbins,nkbins,4/)! Dataset dimensions
+INTEGER     ::   rankbk = 4  
 INTEGER :: i,j,l
 
-  DO i = 1, 4
-     DO j = 1, 4
-     	DO l = 1, 4
-        dset_data(i,j,l) = 1.0*(i+(j-1)*4+(l-1)*4**2)
-     	END DO
-     END DO
-  END DO
 
 CALL h5open_f(error)
-CALL h5fcreate_f(filename, H5F_ACC_TRUNC_F, file_id, error)
-! Create the dataspace.
-  !
-  CALL h5screate_simple_f(rank, dims, dspace_id, error)
-print*,H5T_NATIVE_DOUBLE
-  !
-  ! Create the dataset with default properties.
-  !
-  CALL h5dcreate_f(file_id, dsetname, H5T_NATIVE_DOUBLE, dspace_id,dset_id, error)
+	CALL h5fcreate_f(trim(filename), H5F_ACC_TRUNC_F, file_id, error)
 
-  CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, dset_data, dims, error)
-  !
-  ! End access to the dataset and release resources used by it.
-  !
-  CALL h5dclose_f(dset_id, error)
+	CALL h5screate_simple_f(rankb, dimsb, dspace_id, error)
+		CALL h5dcreate_f(file_id, trim(dsetname), H5T_NATIVE_DOUBLE, dspace_id,dset_id, error)
+			CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, b, dimsb, error)
+		CALL h5dclose_f(dset_id, error)
+	CALL h5sclose_f(dspace_id, error)
 
-  !
-  ! Terminate access to the data space.
-  !
-  CALL h5sclose_f(dspace_id, error)
-CALL h5fclose_f(file_id, error)
+	CALL h5screate_simple_f(rankb, dimsb, dspace_id, error)
+		CALL h5dcreate_f(file_id, trim(dsetname)//'_cnt', H5T_NATIVE_INTEGER, dspace_id,dset_id, error)
+			CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, bcnt, dimsb, error)
+		CALL h5dclose_f(dset_id, error)
+	CALL h5sclose_f(dspace_id, error)
+
+	CALL h5screate_simple_f(rankbk, dimsbk, dspace_id, error)
+		CALL h5dcreate_f(file_id, trim(dsetname)//'_kavg', H5T_NATIVE_DOUBLE, dspace_id,dset_id, error)
+			CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, kavg, dimsbk, error)
+		CALL h5dclose_f(dset_id, error)
+	CALL h5sclose_f(dspace_id, error)
+
+
+	CALL h5fclose_f(file_id, error)
 CALL h5close_f(error)
 end subroutine hdf5export
 

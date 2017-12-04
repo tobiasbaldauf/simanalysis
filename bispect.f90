@@ -49,15 +49,16 @@ integer :: i
 	
 call cpu_time(time1)
 ! Size of FFT Grid	
-NCell=256
+NCell=128
 box=1500.
 ! Redshift Output
 FileNumber=9
 ! Realization
 NodeNumber=1
 
-call genbink(0.003d0,1.0d0,'lin')
-
+call genbink(0.003d0,0.1d0,'lin')
+print*,kbinb
+print*,kbinc
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 !				> > > FILENAMES < < <
@@ -134,7 +135,7 @@ sf%SNAPEXT = snapstr
 sf%SNAPNFILES = 24
 
 
-!call read_snap(sF,iDat,iPos,iVel,iID,iRed,NCell,deltadm)
+call read_snap(sF,iDat,iPos,iVel,iID,iRed,NCell,deltadm)
 call normalize(deltadm)
 
 
@@ -164,9 +165,12 @@ close(20)
 print*,'Calling Bispectrum routine'
 call bispectrum_threefield(deltadm,deltadm,deltadm,.False.,10,bispectcnt,bispectdfdfdf,bispectk)
 
-call hdf5export('bispect.h5','bispect',bispectcnt,bispectdfdfdf,bispectk)
+call bispecthdf5export('bispect.h5','bispect',bispectcnt,bispectdfdfdf,bispectk)
 
-print*, bispectdfdfdf(4,4,:)
+
+do i=1,nkbins
+write(*,'(1i10,3f12.2,1es20.4)'), bispectcnt(i,i,i),bispectk(i,i,i,:)/((2.0*pi)/box),bispectdfdfdf(i,i,i)
+enddo
 
 				
 deallocate(deltadm)

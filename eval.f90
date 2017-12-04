@@ -8,7 +8,7 @@ real(8), dimension(nkbins) :: kbinc
 real(8), dimension(nkbins+1) :: kbinb
 real(8), parameter :: massUNIT= 1.0d10
 character*3, parameter :: assign='CIC'
-character*3,parameter :: ffttype='mes'
+character*3,parameter :: ffttype='est'
 real(8) :: box
 real :: rhobar
 integer,parameter :: chunk=10
@@ -442,7 +442,7 @@ print*,'Starting Loops'
 !$OMP PARALLEL DO DEFAULT(SHARED) PRIVATE(k1,k2,k3,j1,j2,j3,i1,i2,i3,kz1,kz2,kz3,ky1,ky2,ky3,kx1,kx2,kx3,kr1,kr2,kr3,pow,w1,w2,w3,cyfac,c1,c2,c3) NUM_THREADS(nthr) &
 !$OMP REDUCTION(+:binCnt,binB,binK)
 do k1=1,nc
-	print*,'k1',k1
+	!print*,'k1',k1
 	!nthr=OMP_GET_NUM_THREADS()
 	!TID = OMP_GET_THREAD_NUM()
 	!print *,'Threads ',nthr,'ID ',tid
@@ -455,7 +455,7 @@ do k1=1,nc
 		cycle
 	endif
 	do j1=1,nc
-		print*,'j1',j1
+		!print*,'j1',j1
 		if (j1 .lt. imax) then
 			ky1=j1-1
 		else if (j1 .gt. nc-imax) then
@@ -554,16 +554,17 @@ do k1=1,nc
 						
 						
 						
-						kr1=sqrt(kx1**2.0+ky1**2.0+kz1**2.0)
-						kr2=sqrt(kx2**2.0+ky2**2.0+kz2**2.0)
-						kr3=sqrt(kx3**2.0+ky3**2.0+kz3**2.0)
+						kr1=sqrt(kx1**2.0+ky1**2.0+kz1**2.0)*2.0d0*pi/box
+						kr2=sqrt(kx2**2.0+ky2**2.0+kz2**2.0)*2.0d0*pi/box
+						kr3=sqrt(kx3**2.0+ky3**2.0+kz3**2.0)*2.0d0*pi/box
 						
-						
+												
 						if (kr1 > 0.0 .and. kr2 > 0.0 .and. kr3 > 0.0) then
 							do w1=1,Nkbins
 								do w2=1,Nkbins
 									do w3=1,Nkbins
 									   if ((kr1>=kbinb(w1)) .and.(kr1<kbinb(w1+1)) .and. (kr2>=kbinb(w2)) .and.(kr2<kbinb(w2+1)) .and. (kr3>=kbinb(w3)) .and.(kr3<kbinb(w3+1))) then
+											!print*,kr1,kr2,kr3
 											binCnt(w1,w2,w3)=binCnt(w1,w2,w3)+1
 											binB(w1,w2,w3)=binB(w1,w2,w3)+pow
 											binK(w1,w2,w3,1)=binK(w1,w2,w3,1)+kr1
@@ -591,8 +592,10 @@ do w1=1,Nkbins
 	do w2=1,Nkbins
 		do w3=1,Nkbins
 			if (binCnt(w1,w2,w3) .gt. 0) then
-				binB(w1,w2,w3)=binB(w1,w2,w3)/real(binCnt(w1,w2,w3))
+				
+				binB(w1,w2,w3)=1.0d0/box**3.0*binB(w1,w2,w3)/real(binCnt(w1,w2,w3))
 				binK(w1,w2,w3,:)=binK(w1,w2,w3,:)/real(binCnt(w1,w2,w3))
+			print*,w1,w2,w3,binCnt(w1,w2,w3),binK(w1,w2,w3,:)
 			endif
 		enddo
 	enddo
@@ -660,7 +663,7 @@ implicit none
 end subroutine fft3d
 
 
-subroutine hdf5export(filename,dsetname,bcnt,b,kavg)
+subroutine bispecthdf5export(filename,dsetname,bcnt,b,kavg)
 use hdf5
 implicit none
 integer :: error  
@@ -704,7 +707,7 @@ CALL h5open_f(error)
 
 	CALL h5fclose_f(file_id, error)
 CALL h5close_f(error)
-end subroutine hdf5export
+end subroutine bispecthdf5export
 
 
 

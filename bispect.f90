@@ -165,7 +165,7 @@ close(20)
 print*,'Calling Bispectrum routine'
 call bispectrum_threefield(deltadm,deltadm,deltadm,.False.,10,bispectcnt,bispectdfdfdf,bispectk)
 
-call bispecthdf5export('bispect.h5','bispect',bispectcnt,bispectdfdfdf,bispectk)
+call bispecthdf5export('bispect_NODE'//trim(nodestr)//'.h5','bispect',bispectcnt,bispectdfdfdf,bispectk)
 
 
 do i=1,nkbins

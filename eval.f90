@@ -670,9 +670,9 @@ integer :: error
 CHARACTER(*) :: filename ! File name
 CHARACTER(*) :: dsetname    ! Dataset name
 
-INTEGER(HID_T) :: file_id       ! File identifier
-INTEGER(HID_T) :: dset_id,dset_id2,dset_id3      ! Dataset identifier
-INTEGER(HID_T) :: dspace_id,dspace_id2,dspace_id3     ! Dataspace identifier
+INTEGER(HID_T) :: file_id	! File identifier
+INTEGER(HID_T) :: dset_id	! Dataset identifier
+INTEGER(HID_T) :: dspace_id	! Dataspace identifier
 REAL(8), DIMENSION(nkbins,nkbins,nkbins) :: b
 REAL(8), DIMENSION(nkbins,nkbins,nkbins,3) :: kavg
 INTEGER, DIMENSION(nkbins,nkbins,nkbins) :: bcnt
@@ -680,6 +680,9 @@ INTEGER(HSIZE_T), DIMENSION(3), parameter :: dimsb=(/nkbins,nkbins,nkbins/)! Dat
 INTEGER     ::   rankb = 3
 INTEGER(HSIZE_T), DIMENSION(4), parameter :: dimsbk=(/nkbins,nkbins,nkbins,3/)! Dataset dimensions
 INTEGER     ::   rankbk = 4  
+INTEGER(HSIZE_T), DIMENSION(1), parameter :: dimsk=(/nkbins/)! Dataset dimensions
+INTEGER     ::   rankk = 1  
+
 
 
 CALL h5open_f(error)
@@ -691,17 +694,24 @@ CALL h5open_f(error)
 		CALL h5dclose_f(dset_id, error)
 	CALL h5sclose_f(dspace_id, error)
 
-	CALL h5screate_simple_f(rankb, dimsb, dspace_id2, error)
-		CALL h5dcreate_f(file_id, trim(dsetname)//'_cnt', H5T_NATIVE_INTEGER, dspace_id2,dset_id2, error)
-			CALL h5dwrite_f(dset_id2, H5T_NATIVE_INTEGER, bcnt, dimsb, error)
-		CALL h5dclose_f(dset_id2, error)
-	CALL h5sclose_f(dspace_id2, error)
+	CALL h5screate_simple_f(rankb, dimsb, dspace_id, error)
+		CALL h5dcreate_f(file_id, trim(dsetname)//'_cnt', H5T_NATIVE_INTEGER, dspace_id,dset_id, error)
+			CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, bcnt, dimsb, error)
+		CALL h5dclose_f(dset_id, error)
+	CALL h5sclose_f(dspace_id, error)
 
-	CALL h5screate_simple_f(rankbk, dimsbk, dspace_id3, error)
-		CALL h5dcreate_f(file_id, trim(dsetname)//'_kavg', H5T_NATIVE_DOUBLE, dspace_id3,dset_id3, error)
-			CALL h5dwrite_f(dset_id3, H5T_NATIVE_DOUBLE, kavg, dimsbk, error)
-		CALL h5dclose_f(dset_id3, error)
-	CALL h5sclose_f(dspace_id3, error)
+	CALL h5screate_simple_f(rankbk, dimsbk, dspace_id, error)
+		CALL h5dcreate_f(file_id, trim(dsetname)//'_kavg', H5T_NATIVE_DOUBLE, dspace_id,dset_id, error)
+			CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, kavg, dimsbk, error)
+		CALL h5dclose_f(dset_id, error)
+	CALL h5sclose_f(dspace_id, error)
+
+	CALL h5screate_simple_f(rankk, dimsk, dspace_id, error)
+		CALL h5dcreate_f(file_id,'kbinc', H5T_NATIVE_DOUBLE, dspace_id,dset_id, error)
+			CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, kbinc, dimsk, error)
+		CALL h5dclose_f(dset_id, error)
+	CALL h5sclose_f(dspace_id, error)
+
 
 
 	CALL h5fclose_f(file_id, error)

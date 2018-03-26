@@ -49,16 +49,14 @@ integer :: i
 	
 call cpu_time(time1)
 ! Size of FFT Grid	
-NCell=128
+NCell=512
 box=1500.
 ! Redshift Output
 FileNumber=9
 ! Realization
 NodeNumber=1
 
-call genbink(0.003d0,0.1d0,'lin')
-print*,kbinb
-print*,kbinc
+call genbink(0.003d0,0.5d0,'log')
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
 !				> > > FILENAMES < < <
@@ -161,11 +159,21 @@ open(20,file=PsOutFile,form='formatted',status='replace')
     enddo
 close(20)
 	
+call bispectrum_fft_equi(deltadm,kBinCnt,powerdfdf)
 
+
+! Write Output
+open(20,file='Spectra/bispect_fft_NODE'//trim(nodestr)//'_'//trim(ncstr)//'.dat',form='formatted',status='replace')
+    do i=1,NkBins
+	write(20,'(1ES30.10,1I30,1ES30.10)') kbinc(i),kbincnt(i),powerdfdf(i)
+    enddo
+close(20)
+
+stop
 print*,'Calling Bispectrum routine'
-call bispectrum_threefield(deltadm,deltadm,deltadm,.False.,10,bispectcnt,bispectdfdfdf,bispectk)
+call bispectrum_threefield(deltadm,deltadm,deltadm,.False.,20,bispectcnt,bispectdfdfdf,bispectk)
 
-call bispecthdf5export('bispect_NODE'//trim(nodestr)//'.h5','bispect',bispectcnt,bispectdfdfdf,bispectk)
+call bispecthdf5export('Spectra/bispect_hr_NODE'//trim(nodestr)//'.h5','bispect',bispectcnt,bispectdfdfdf,bispectk)
 
 
 do i=1,nkbins

@@ -1,12 +1,14 @@
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/cosmos/users/dc-bald1/lib/HDF5-GNU/lib
 source=power_halo
-source=bispect
+source=bispect_2lpt
+source=bispect_mmh_init
 
 AUX1 = eval
 AUX2= read_snap
 
 F90 = gfortran
 F90FLAGS = -O3 -mcmodel=medium -fopenmp -ffixed-line-length-none -ffree-line-length-none
+
 
 HDF5 = /nfs/software/apps/hdf5-1.8.13-intel-15.0.4-serial
 HDF5 = /home/cosmos/users/dc-bald1/lib/HDF5-GNU
@@ -36,6 +38,8 @@ aux:
 	${F90} ${F90FLAGS} ${mods} -c ${AUX1}.f90 ${libs}
 	${F90} ${F90FLAGS} ${mods} -c ${AUX2}.f90
 
+remap:
+	${F90} ${F90FLAGS} remap.f90 -o remap.exe
 clean:
 	rm -f *.o
 	rm -f *.exe

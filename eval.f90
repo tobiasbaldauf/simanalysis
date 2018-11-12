@@ -963,7 +963,7 @@ do w1=1,NkBins
 	!$OMP END PARALLEL DO
 
 	if (RadContD(w1)>0.0d0) then
-	    RadCont(w1)=RadCont(w1)/RadContD(w1)
+	    RadCont(w1)=RadCont(w1)/RadContD(w1)/box**3.0
 	else
 	    RadCont(w1)=0.0d0
 	endif
@@ -983,6 +983,255 @@ write(*,'(a,f8.2)') ' Bispectrum calculated in', time2
 return
 end subroutine bispectrum_fft_equi
 
+
+!///////////////////////////////////////////////////////////////////////////////
+!				Bispectrum mmh Mudependent
+!///////////////////////////////////////////////////////////////////////////////
+subroutine trispectrum_fft_equi(delta,radcnt,radcont)
+implicit none
+real(8) :: ncr  
+integer :: nc
+real(8), dimension(:,:,:) :: delta
+integer :: w1,w2,w3
+integer :: i,i1,i2,i3,j1,j2,j3,k1,k2,k3
+real(8) :: kr,kr1,kr2,kr3,kx1,kx2,kx3,ky1,ky2,ky3,kz1,kz2,kz3,pow,x2,x3,mu       
+real :: time1,time2
+
+real(8), dimension(NkBins) :: RadCont,RadContd,RadVar
+real(8), dimension(:,:,:), allocatable :: deltaa,deltab,deltac,deltaad,deltabd,deltacd
+integer, dimension(NkBins) :: RadCnt
+integer :: OMP_GET_NUM_THREADS,nthr,TID,OMP_GET_THREAD_NUM
+real(8) :: sumsqpower
+real(8) :: cyfac
+integer, parameter :: nmin=1
+
+
+
+print*, 'start bispectrum'
+
+
+call cpu_time(time1)
+nc=ncell
+ncr=ncell
+
+
+RadCnt=0
+RadCont=0.
+RadContd=0.
+RadVar=0.
+
+sumsqpower=0.0d0
+
+
+
+
+
+do w1=1,NkBins
+	allocate(deltaa(Nc+2,Nc,Nc))
+	deltaa=0.0d0
+	allocate(deltaad(Nc+2,Nc,Nc))
+	deltaad=0.0d0
+
+	do k1=nmin,nc
+	!print*,'k1',k1
+	!nthr=OMP_GET_NUM_THREADS()
+	!TID = OMP_GET_THREAD_NUM()
+	!print *,'Threads ',nthr,'ID ',tid
+
+
+	if (k1 .lt. ithresh) then
+		    kz1=k1-1
+		else if (k1 .gt. nc-ithresh) then
+		    kz1=k1-1-nc
+		else
+		    cycle
+		endif
+		do j1=nmin,nc
+		    !print*,'j1',j1
+		    if (j1 .lt. ithresh) then
+			ky1=j1-1
+		    else if (j1 .gt. nc-ithresh) then
+			ky1=j1-1-nc
+		    else
+			cycle
+		    endif
+		    do i1=1,ncell+2,2
+		        kx1=(i1-1)/2
+			kr1=sqrt(kx1**2.0+ky1**2.0+kz1**2.0)*2.0*pi/box
+			if ((kr1>kBinB(w1)) .and.(kr1<=kBinB(w1+1))) then
+			    deltaa(i1,j1,k1)=delta(i1,j1,k1)
+			    deltaa(i1+1,j1,k1)=delta(i1+1,j1,k1)
+	    		    deltaad(i1,j1,k1)=1.0d0
+			    deltaad(i1+1,j1,k1)=0.0d0
+			endif
+			enddo
+			enddo
+			enddo
+			call fft3d(deltaa,deltaa,'e')
+			call fft3d(deltaad,deltaad,'e')
+		
+	 
+
+	print*,'Done ffts'
+	!$OMP PARALLEL DO SHARED(nc) PRIVATE(k1,j1,i1)  NUM_THREADS(nthr) SCHEDULE(DYNAMIC,chunk) &
+	!$OMP REDUCTION(+:RadCont,RadContD) 
+		do j1=1,nc	
+		    do k1=1,nc
+			do i1=1,nc
+			    RadCont(w1)=RadCont(w1)+deltaa(i1,j1,k1)**4.0
+			    RadContD(w1)=RadContD(w1)+deltaad(i1,j1,k1)**4.0
+			enddo
+		    enddo
+		enddo
+	!$OMP END PARALLEL DO
+
+	if (RadContD(w1)>0.0d0) then
+	    RadCont(w1)=RadCont(w1)/RadContD(w1)
+	else
+	    RadCont(w1)=0.0d0
+	endif
+
+
+	print*,'Done sum'
+
+	!enddo
+	deallocate(deltaa)
+	deallocate(deltaad)
+enddo
+
+
+call cpu_time(time2)
+time2=(time2-time1)
+write(*,'(a,f8.2)') ' Bispectrum calculated in', time2
+return
+end subroutine trispectrum_fft_equi
+
+
+!///////////////////////////////////////////////////////////////////////////////
+!				Bispectrum mmh Mudependent
+!///////////////////////////////////////////////////////////////////////////////
+subroutine trispectrum_fft_equi_propa(delta,deltalin,radcnt,radcont)
+implicit none
+real(8) :: ncr  
+integer :: nc
+real(8), dimension(:,:,:) :: delta,deltalin
+integer :: w1,w2,w3
+integer :: i,i1,i2,i3,j1,j2,j3,k1,k2,k3
+real(8) :: kr,kr1,kr2,kr3,kx1,kx2,kx3,ky1,ky2,ky3,kz1,kz2,kz3,pow,x2,x3,mu       
+real :: time1,time2
+
+real(8), dimension(NkBins) :: RadCont,RadContd,RadVar
+real(8), dimension(:,:,:), allocatable :: deltaa,deltab,deltac,deltaad,deltabd,deltacd
+integer, dimension(NkBins) :: RadCnt
+integer :: OMP_GET_NUM_THREADS,nthr,TID,OMP_GET_THREAD_NUM
+real(8) :: sumsqpower
+real(8) :: cyfac
+integer, parameter :: nmin=1
+
+
+
+print*, 'start bispectrum'
+
+
+call cpu_time(time1)
+nc=ncell
+ncr=ncell
+
+
+RadCnt=0
+RadCont=0.
+RadContd=0.
+RadVar=0.
+
+sumsqpower=0.0d0
+
+
+
+
+
+do w1=1,NkBins
+	allocate(deltaa(Nc+2,Nc,Nc))
+	deltaa=0.0d0
+	allocate(deltaa(Nc+2,Nc,Nc))
+	deltab=0.0d0
+	allocate(deltaad(Nc+2,Nc,Nc))
+	deltaad=0.0d0
+
+	do k1=nmin,nc
+	!print*,'k1',k1
+	!nthr=OMP_GET_NUM_THREADS()
+	!TID = OMP_GET_THREAD_NUM()
+	!print *,'Threads ',nthr,'ID ',tid
+
+
+	if (k1 .lt. ithresh) then
+		    kz1=k1-1
+		else if (k1 .gt. nc-ithresh) then
+		    kz1=k1-1-nc
+		else
+		    cycle
+		endif
+		do j1=nmin,nc
+		    !print*,'j1',j1
+		    if (j1 .lt. ithresh) then
+			ky1=j1-1
+		    else if (j1 .gt. nc-ithresh) then
+			ky1=j1-1-nc
+		    else
+			cycle
+		    endif
+		    do i1=1,ncell+2,2
+		        kx1=(i1-1)/2
+			kr1=sqrt(kx1**2.0+ky1**2.0+kz1**2.0)*2.0*pi/box
+			if ((kr1>kBinB(w1)) .and.(kr1<=kBinB(w1+1))) then
+			    deltaa(i1,j1,k1)=delta(i1,j1,k1)
+			    deltaa(i1+1,j1,k1)=delta(i1+1,j1,k1)
+			    deltab(i1,j1,k1)=deltalin(i1,j1,k1)
+			    deltab(i1+1,j1,k1)=deltalin(i1+1,j1,k1)
+	    		    deltaad(i1,j1,k1)=1.0d0
+			    deltaad(i1+1,j1,k1)=0.0d0
+			endif
+			enddo
+			enddo
+			enddo
+			call fft3d(deltaa,deltaa,'e')
+			call fft3d(deltaad,deltaad,'e')
+		
+	 
+
+	print*,'Done ffts'
+	!$OMP PARALLEL DO SHARED(nc) PRIVATE(k1,j1,i1)  NUM_THREADS(nthr) SCHEDULE(DYNAMIC,chunk) &
+	!$OMP REDUCTION(+:RadCont,RadContD) 
+		do j1=1,nc	
+		    do k1=1,nc
+			do i1=1,nc
+			    RadCont(w1)=RadCont(w1)+deltaa(i1,j1,k1)**3.0*deltab(i1,j1,k1)
+			    RadContD(w1)=RadContD(w1)+deltaad(i1,j1,k1)**4.0
+			enddo
+		    enddo
+		enddo
+	!$OMP END PARALLEL DO
+
+	if (RadContD(w1)>0.0d0) then
+	    RadCont(w1)=RadCont(w1)/RadContD(w1)
+	else
+	    RadCont(w1)=0.0d0
+	endif
+
+
+	print*,'Done sum'
+
+	!enddo
+	deallocate(deltaa)
+	deallocate(deltaad)
+enddo
+
+
+call cpu_time(time2)
+time2=(time2-time1)
+write(*,'(a,f8.2)') ' Bispectrum calculated in', time2
+return
+end subroutine trispectrum_fft_equi_propa
 
 !///////////////////////////////////////////////////////////////////////////////
 !				Bispectrum mmh Mudependent
@@ -1359,6 +1608,36 @@ CALL h5open_f(error)
 CALL h5close_f(error)
 end subroutine bispectmuhdf5export
 
+subroutine fieldhdf5export(filename,dsetname,b)
+use hdf5
+implicit none
+integer :: error  
+integer, parameter :: ncellh=128
+CHARACTER(*) :: filename ! File name
+CHARACTER(*) :: dsetname    ! Dataset name
 
+INTEGER(HID_T) :: file_id	! File identifier
+INTEGER(HID_T) :: dset_id	! Dataset identifier
+INTEGER(HID_T) :: dspace_id	! Dataspace identifier
+REAL(8), DIMENSION(ncellh,ncellh,ncellh) :: b
+INTEGER(HSIZE_T), DIMENSION(3), parameter :: dimsb=(/ncellh,ncellh,ncellh/)! Dataset dimensions
+INTEGER     ::   rankb = 3
+
+
+
+CALL h5open_f(error)
+	CALL h5fcreate_f(trim(filename), H5F_ACC_TRUNC_F, file_id, error)
+
+	CALL h5screate_simple_f(rankb, dimsb, dspace_id, error)
+		CALL h5dcreate_f(file_id, trim(dsetname), H5T_NATIVE_DOUBLE, dspace_id,dset_id, error)
+			CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, b, dimsb, error)
+		CALL h5dclose_f(dset_id, error)
+	CALL h5sclose_f(dspace_id, error)
+
+
+
+	CALL h5fclose_f(file_id, error)
+CALL h5close_f(error)
+end subroutine fieldhdf5export
 
 end module eval

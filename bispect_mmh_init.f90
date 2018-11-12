@@ -51,9 +51,10 @@ integer :: FileNumber
 real(8), dimension(:,:,:), allocatable :: deltadm,deltag
 real(8), dimension(:,:,:), allocatable :: deltar
 
-integer, dimension(NkBins) :: kBinCnt
+integer, dimension(NkBins) :: kBinCnt,biequicnt
 real(8), dimension(NkBins) :: kTrueBinC
 real(8), dimension(NkBins) :: powerdfdf
+real(8), dimension(5,NkBins) :: biequihhh,biequisn
 
 integer, dimension(NkBins,NkBins,NmuBins) :: bispectcnt
 real(8), dimension(NkBins,NkBins,NmuBins) :: bispectdmdmdh
@@ -73,8 +74,8 @@ integer, dimension(NMassBins) :: NHalosBin
 integer, dimension(:), allocatable :: IndM
 real(4), dimension(:), allocatable :: HalM
 real(8), dimension(:,:), allocatable :: HalPos,HalVel
-
-
+real(8), dimension(5) :: b1vec
+real(8), parameter :: gr=0.013134836482296224d0
 
 
 NbinB=(/20,60,180,540,1620,4860/) ! Old bins	
@@ -82,7 +83,9 @@ NbinB=(/20,60,180,540,1620,4860/) ! Old bins
 	
 call cpu_time(time1)
 ! Size of FFT Grid	
-NCell=256
+NCell=64
+
+b1vec=(/6.484850908844908002d-02,3.118385029929335861d-01,8.176368939457424601d-01,1.687716449102554028d+00,3.171918504181470144d+00/)
 box=1500.
 ! Redshift Output
 FileNumber=9
@@ -167,10 +170,11 @@ iDat=1; iPos=0; iVel=0; iID=0; iRed=0
 
 
 
-open(25,file='/slow/space/cosmos/lss-nongauss/baldauf/SimSuite/wmap7_fid_run'//trim(nodestr)//'_ZELD/ICs/delta_256.dat',form='unformatted',status='old')
+open(25,file='/slow/space/cosmos/lss-nongauss/baldauf/SimSuite/wmap7_fid_run'//trim(nodestr)//'_ZELD/ICs/delta_64.dat',form='unformatted',status='old')
 read(25) deltadm
 close(25)
 
+deltadm=deltadm/gr
 
 allocate(deltar(1:NCell+2,1:NCell,1:NCell))
 deltar=0.
@@ -246,15 +250,16 @@ close(20)
 			endif
 		
 			print*,'Calling Bispectrum routine'
-			call bispectrum_mu_threefield(deltadm,deltadm,deltag,.False.,20,bispectcnt,bispectdmdmdh,bispectk)
+			!call bispectrum_mu_threefield(deltadm,deltadm,deltag,.False.,20,bispectcnt,bispectdmdmdh,bispectk)
 
-			call bispectmuhdf5export('Spectra/bispect_hr_NODE'//trim(nodestr)//'.h5','bispect',bispectcnt,bispectdmdmdh,bispectk)
+			!call bispectmuhdf5export('Spectra/bispect_hr_NODE'//trim(nodestr)//'.h5','bispect',bispectcnt,bispectdmdmdh,bispectk)
 
 
-			do i=1,nkbins
-				write(*,'(1i10,3f12.2,1es20.4)'), bispectcnt(i,i,i),bispectk(i,i,i,:)/((2.0*pi)/box),bispectdmdmdh(i,i,i)
-			enddo
-
+			!do i=1,nkbins
+				!write(*,'(1i10,3f12.2,1es20.4)'), bispectcnt(i,i,i),bispectk(i,i,i,:)/((2.0*pi)/box),bispectdmdmdh(i,i,i)
+			!enddo
+			call bispectrum_fft_equi(deltag-0*b1vec(imbin)*deltadm,biequicnt,biequihhh(imbin,:))
+			call bispectrum_fft_equi(deltag-b1vec(imbin)*deltadm,biequicnt,biequisn(imbin,:))
 					
 			deallocate(deltag)
 			
@@ -270,8 +275,11 @@ close(20)
 
 				
 deallocate(deltadm)
-
-
+open(21,file='SNbispect/bsn_run'//trim(nodestr)//'.dat',status='replace',form='formatted')
+do i=1,nkbins
+	write(21,'(20es20.5)') kbinc(i),biequihhh(:,i),biequisn(:,i)
+enddo
+close(21)
 
 call cpu_time(time2)
 time2=(time2-time1)

@@ -1,7 +1,7 @@
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/cosmos/users/dc-bald1/lib/HDF5-GNU/lib
 source=power_halo
-source=bispect_2lpt
-source=bispect_mmh_init
+#source=bispect_2lpt
+#source=bispect_mmh_init
 
 AUX1 = eval
 AUX2= read_snap

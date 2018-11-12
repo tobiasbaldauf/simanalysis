@@ -81,7 +81,7 @@ integer :: i
 	
 call cpu_time(time1)
 ! Size of FFT Grid	
-NCell=64
+NCell=128
 box=1500.
 ! Redshift Output
 FileNumber=9
@@ -182,6 +182,9 @@ call read_snap(sF,iDat,iPos,iVel,iID,iRed,NCell,deltadm)
 call normalize(deltadm)
 
 
+call fieldhdf5export('matter_nl_delta.h5','delta_m_128',deltadm)
+
+
 call fft3d(deltadm,deltadm,'f')
 
 
@@ -215,7 +218,7 @@ close(20)
 	if (doBinnedH==1) then
 	
 	
-	do iMBin=1,5
+	do iMBin=3,3
 		write(*,'(a)') '\n\n ***********************************************'
 		write(*,'(a)') '          > > > Halos Mass-Binned < < <'
 		write(*,'(a)') ' ***********************************************\n\n'
@@ -242,6 +245,7 @@ close(20)
 		
 		
 		open(11,file=trim(HalInFile),status='old',form='unformatted')
+		open(20,file='halpos_binIII.dat',form='formatted',status='replace')
 		read(11) NHalTot
 		cnt=0
 		do i=1,NHalTot
@@ -251,9 +255,15 @@ close(20)
 			    HalM(cnt)=HaloFINAL%HMass
 			    HalPos(:,cnt)=HaloFINAL%HPos(:)
 			    HalVel(:,cnt)=HaloFINAL%HVel(:)/sqrt(0.0d0+1.0d0)
+
+			write(20,'(3ES30.10)') HaloFINAL%HPos(:)
+
+
 			endif
 		end do
+		close(20)
 		close(11)
+		
 		
 		print*,'Haloes Loaded'
 		
@@ -264,7 +274,7 @@ close(20)
 			MBinC(iMBin)=sum(HalM)/real(NHalBin)
 
 			call normalize(deltag)
-			
+			call fieldhdf5export('halo_delta.h5','delta_h_128',deltadm)
 
 			call fft3d(deltag,deltag,'f')
 		

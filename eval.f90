@@ -1497,7 +1497,9 @@ implicit none
   return
 end subroutine fft3d
 
-
+!///////////////////////////////////////////////////////////////////////////////
+!			Export HDF5 Bispectrum
+!///////////////////////////////////////////////////////////////////////////////
 subroutine bispecthdf5export(filename,dsetname,bcnt,b,kavg)
 use hdf5
 implicit none
@@ -1553,6 +1555,9 @@ CALL h5open_f(error)
 CALL h5close_f(error)
 end subroutine bispecthdf5export
 
+!///////////////////////////////////////////////////////////////////////////////
+!			Export HDF5 Bispectrum Mu
+!///////////////////////////////////////////////////////////////////////////////
 subroutine bispectmuhdf5export(filename,dsetname,bcnt,b,kavg)
 use hdf5
 implicit none
@@ -1608,6 +1613,10 @@ CALL h5open_f(error)
 CALL h5close_f(error)
 end subroutine bispectmuhdf5export
 
+
+!///////////////////////////////////////////////////////////////////////////////
+!			Export HDF5 Field
+!///////////////////////////////////////////////////////////////////////////////
 subroutine fieldhdf5export(filename,dsetname,b)
 use hdf5
 implicit none
@@ -1640,4 +1649,113 @@ CALL h5open_f(error)
 CALL h5close_f(error)
 end subroutine fieldhdf5export
 
+!///////////////////////////////////////////////////////////////////////////////
+!				HDF5 Open
+!///////////////////////////////////////////////////////////////////////////////
+subroutine hdf5openfile(filename,file_id)
+use hdf5
+implicit none
+integer :: error  
+CHARACTER(*) :: filename 	!File name
+INTEGER(HID_T) :: file_id 	!File identifier
+
+
+CALL h5open_f(error)
+CALL h5fcreate_f(trim(filename), H5F_ACC_TRUNC_F, file_id, error)
+
+end subroutine hdf5openfile
+
+!///////////////////////////////////////////////////////////////////////////////
+!				HDF5 Close
+!///////////////////////////////////////////////////////////////////////////////
+subroutine hdf5closefile(file_id)
+use hdf5
+implicit none
+integer :: error  
+INTEGER(HID_T) :: file_id 	!File identifier
+
+
+CALL h5fclose_f(file_id, error)
+CALL h5close_f(error)
+
+end subroutine hdf5closefile
+
+!///////////////////////////////////////////////////////////////////////////////
+!				HDF5 Write Vec
+!///////////////////////////////////////////////////////////////////////////////
+subroutine hdf5writevec(file_id,dsetname,vec)
+use hdf5
+implicit none
+integer :: error  
+CHARACTER(*) :: dsetname    ! Dataset name
+
+INTEGER(HID_T) :: file_id	! File identifier
+INTEGER(HID_T) :: dset_id	! Dataset identifier
+INTEGER(HID_T) :: dspace_id	! Dataspace identifier
+REAL(8), DIMENSION(nkbins) :: vec
+INTEGER(HSIZE_T), DIMENSION(1), parameter :: dimsb=(/nkbins/)! Dataset dimensions
+INTEGER     ::   rankb = 1
+
+CALL h5screate_simple_f(rankb, dimsb, dspace_id, error)
+	CALL h5dcreate_f(file_id, trim(dsetname), H5T_NATIVE_DOUBLE, dspace_id,dset_id, error)
+		CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vec, dimsb, error)
+	CALL h5dclose_f(dset_id, error)
+CALL h5sclose_f(dspace_id, error)
+
+
+end subroutine hdf5writevec
+
+!///////////////////////////////////////////////////////////////////////////////
+!				HDF5 Write Vec Cnt
+!///////////////////////////////////////////////////////////////////////////////
+subroutine hdf5writeveccnt(file_id,dsetname,vec,veccnt)
+use hdf5
+implicit none
+integer :: error  
+CHARACTER(*) :: dsetname    ! Dataset name
+
+INTEGER(HID_T) :: file_id	! File identifier
+INTEGER(HID_T) :: dset_id	! Dataset identifier
+INTEGER(HID_T) :: dspace_id	! Dataspace identifier
+REAL(8), DIMENSION(nkbins) :: vec,veccnt
+INTEGER(HSIZE_T), DIMENSION(1), parameter :: dimsb=(/nkbins/)! Dataset dimensions
+INTEGER     ::   rankb = 1
+
+CALL h5screate_simple_f(rankb, dimsb, dspace_id, error)
+	CALL h5dcreate_f(file_id, trim(dsetname), H5T_NATIVE_DOUBLE, dspace_id,dset_id, error)
+		CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vec, dimsb, error)
+	CALL h5dclose_f(dset_id, error)
+CALL h5sclose_f(dspace_id, error)
+
+CALL h5screate_simple_f(rankb, dimsb, dspace_id, error)
+	CALL h5dcreate_f(file_id, trim(dsetname)//'_cnt', H5T_NATIVE_DOUBLE, dspace_id,dset_id, error)
+		CALL h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, vec, dimsb, error)
+	CALL h5dclose_f(dset_id, error)
+CALL h5sclose_f(dspace_id, error)
+
+end subroutine hdf5writeveccnt
+!///////////////////////////////////////////////////////////////////////////////
+!				HDF5 Write Vec
+!///////////////////////////////////////////////////////////////////////////////
+subroutine hdf5writevec_int(file_id,dsetname,vec)
+use hdf5
+implicit none
+integer :: error  
+CHARACTER(*) :: dsetname    ! Dataset name
+
+INTEGER(HID_T) :: file_id	! File identifier
+INTEGER(HID_T) :: dset_id	! Dataset identifier
+INTEGER(HID_T) :: dspace_id	! Dataspace identifier
+INTEGER(4), DIMENSION(nkbins) :: vec
+INTEGER(HSIZE_T), DIMENSION(1), parameter :: dimsb=(/nkbins/)! Dataset dimensions
+INTEGER     ::   rankb = 1
+
+CALL h5screate_simple_f(rankb, dimsb, dspace_id, error)
+	CALL h5dcreate_f(file_id, trim(dsetname), H5T_NATIVE_INTEGER, dspace_id,dset_id, error)
+		CALL h5dwrite_f(dset_id, H5T_NATIVE_INTEGER, vec, dimsb, error)
+	CALL h5dclose_f(dset_id, error)
+CALL h5sclose_f(dspace_id, error)
+
+
+end subroutine hdf5writevec_int
 end module eval
